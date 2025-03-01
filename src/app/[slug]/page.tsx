@@ -28,6 +28,10 @@ const RestaurantePage = async ({ params }: RestaurantePageProps) => {
       {/* BEM VINDO */}
       <div className="space-y-2 pt-24 text-center">
         <h3 className="text-2xl font-semibold">Seja bem-vindo!</h3>
+        <p className="opacity-55">
+          Escolha como prefere aproveitar sua refeição. Estamos aqui para
+          oferecer praticidade e sabor em cada detalhe!
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 pt-14">
