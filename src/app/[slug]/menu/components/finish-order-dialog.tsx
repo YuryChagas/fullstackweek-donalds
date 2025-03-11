@@ -26,6 +26,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useParams, useSearchParams } from "next/navigation";
+import { createOrder } from "../actions/create-order";
+import { ConsumptionMethod } from "@prisma/client";
+import { useContext } from "react";
+import { Car } from "lucide-react";
+import { CartContext } from "../context/cart";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, {
@@ -42,7 +49,16 @@ const formSchema = z.object({
 
 type FormShema = z.infer<typeof formSchema>;
 
-const FinishOrderButton = () => {
+interface FinishOrderButtonProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const FinishOrderDialog = ({ open, onOpenChange }: FinishOrderButtonProps) => {
+  const { slug } = useParams<{ slug: string }>();
+  const { products } = useContext(CartContext);
+  const searchParams = useSearchParams();
+
   const form = useForm<FormShema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,15 +68,29 @@ const FinishOrderButton = () => {
     shouldUnregister: true,
   });
 
-  const onSubmit = (data: FormShema) => {
-    console.log({ data });
+  const onSubmit = async (data: FormShema) => {
+    try {
+      const consumptionMethod = searchParams.get(
+        "consumptionMethod",
+      ) as ConsumptionMethod;
+      await createOrder({
+        consumptionMethod,
+        constomerCpf: data.cpf,
+        constomerName: data.name,
+        products,
+        slug,
+      });
+
+      onOpenChange(false);
+      toast.success("Pedido finalizado com sucesso!");
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <Drawer>
-      <DrawerTrigger asChild>
-        <Button className="w-full rounded-full">Finalizar pedido</Button>
-      </DrawerTrigger>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerTrigger asChild></DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>Finalizar pedido</DrawerTitle>
@@ -124,4 +154,4 @@ const FinishOrderButton = () => {
   );
 };
 
-export default FinishOrderButton;
+export default FinishOrderDialog;
