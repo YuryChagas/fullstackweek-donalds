@@ -29,8 +29,8 @@ import { Input } from "@/components/ui/input";
 import { useParams, useSearchParams } from "next/navigation";
 import { createOrder } from "../actions/create-order";
 import { ConsumptionMethod } from "@prisma/client";
-import { useContext } from "react";
-import { Car } from "lucide-react";
+import { useContext, useTransition } from "react";
+import { Car, Loader2Icon } from "lucide-react";
 import { CartContext } from "../context/cart";
 import { toast } from "sonner";
 
@@ -58,6 +58,7 @@ const FinishOrderDialog = ({ open, onOpenChange }: FinishOrderButtonProps) => {
   const { slug } = useParams<{ slug: string }>();
   const { products } = useContext(CartContext);
   const searchParams = useSearchParams();
+  const [isPending, startTrasition] = useTransition();
 
   const form = useForm<FormShema>({
     resolver: zodResolver(formSchema),
@@ -73,16 +74,17 @@ const FinishOrderDialog = ({ open, onOpenChange }: FinishOrderButtonProps) => {
       const consumptionMethod = searchParams.get(
         "consumptionMethod",
       ) as ConsumptionMethod;
-      await createOrder({
-        consumptionMethod,
-        constomerCpf: data.cpf,
-        constomerName: data.name,
-        products,
-        slug,
+      startTrasition(async () => {
+        await createOrder({
+          consumptionMethod,
+          constomerCpf: data.cpf,
+          constomerName: data.name,
+          products,
+          slug,
+        });
+        onOpenChange(false);
+        toast.success("Pedido finalizado com sucesso!");
       });
-
-      onOpenChange(false);
-      toast.success("Pedido finalizado com sucesso!");
     } catch (error) {
       console.error(error);
     }
@@ -137,7 +139,9 @@ const FinishOrderDialog = ({ open, onOpenChange }: FinishOrderButtonProps) => {
                   className="rounded-full"
                   variant="destructive"
                   type="submit"
+                  disabled={isPending}
                 >
+                  {isPending && <Loader2Icon className="animate-spin" />}
                   Finalizar
                 </Button>
                 <DrawerClose asChild>
